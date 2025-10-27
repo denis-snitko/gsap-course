@@ -59,12 +59,27 @@ const Hero = () => {
     });
 
     if (videoRef.current) {
-      videoRef.current.onloadedmetadata = () => {
-        const duration = videoRef.current?.duration;
-        if (typeof duration === "number" && !isNaN(duration) && duration > 0) {
-          tl.to(videoRef.current, {
-            currentTime: duration - 0.01,
-          });
+      const v = videoRef.current as HTMLVideoElement;
+
+      v.onloadedmetadata = () => {
+        const duration: number = v.duration;
+
+        // Инициализация Safari: заставляем видео отрисовать первый кадр
+        const playPromise: Promise<void> | undefined = v.play();
+
+        if (playPromise !== undefined) {
+          playPromise
+            .then(() => {
+              v.pause();
+              v.currentTime = 0;
+            })
+            .catch(() => {
+              // Игнорируем, если Safari запретил play()
+            });
+        }
+
+        if (Number.isFinite(duration) && duration > 0) {
+          tl.to(v, { currentTime: duration - 0.01 });
         }
       };
     }
